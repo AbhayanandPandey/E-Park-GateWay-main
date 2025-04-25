@@ -52,15 +52,12 @@ app.use(express.static("views"));
 app.set("view engine", "hbs");
 function isAuthenticated(req, res, next) {
   if (!req.session.userId) {
-    req.session.redirectTo = req.originalUrl;
+    req.session.redirectTo = req.originalUrl
+    ;
     return res.redirect("/loginsignup");
   }
   next();
 }
-const VIEWS_PATH = path.join(__dirname, './views');
-
-app.set('view engine', 'hbs');
-app.set('views', VIEWS_PATH);
 
 
 function sessionMessageHandler(req, res, next) {
