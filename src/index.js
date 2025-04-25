@@ -9,6 +9,10 @@ const sendCNFEmail1 = require("./middleware/sendCNFEmail");
 const generateRandomProductId = () => {
   return 'E-PARK-' + Math.random().toString(36).substr(2, 9).toUpperCase();
 };
+
+
+
+
 const isAuth = require("./middleware/isAuthentic");
 const PDFDocument = require('pdfkit');
 const bodyParser = require('body-parser');
@@ -53,6 +57,12 @@ function isAuthenticated(req, res, next) {
   }
   next();
 }
+const VIEWS_PATH = path.join(__dirname, './views');
+
+app.set('view engine', 'hbs');
+app.set('views', VIEWS_PATH);
+
+
 function sessionMessageHandler(req, res, next) {
   res.locals.alertMessage = req.session.alertMessage || null;
   res.locals.alertType = req.session.alertType || null;
