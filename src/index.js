@@ -60,6 +60,20 @@ function isAuthenticated(req, res, next) {
 }
 
 
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
+
+app.use(session({
+  secret: 'your-secret-key',
+  resave: false,
+  saveUninitialized: true,
+  store: MongoStore.create({
+    mongoUrl: "mongodb+srv://eparkgateway:qsb3O2PbQzMUysvX@epark.vrqna2i.mongodb.net/NEWDATA?retryWrites=true&w=majority&appName=Epark", // Or your MongoDB URI
+    collectionName: 'sessions'
+  })
+}));
+
+
 function sessionMessageHandler(req, res, next) {
   res.locals.alertMessage = req.session.alertMessage || null;
   res.locals.alertType = req.session.alertType || null;
