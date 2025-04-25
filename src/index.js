@@ -63,7 +63,7 @@ function isAuthenticated(req, res, next) {
 const MongoStore = require('connect-mongo');
 
 app.use(session({
-  secret: 'your-secret-key',
+  secret: 'kjrvgkrewgfuwgfvjkjewqwgfueqgf',
   resave: false,
   saveUninitialized: true,
   store: MongoStore.create({
