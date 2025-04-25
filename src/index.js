@@ -60,7 +60,6 @@ function isAuthenticated(req, res, next) {
 }
 
 
-const session = require('express-session');
 const MongoStore = require('connect-mongo');
 
 app.use(session({
