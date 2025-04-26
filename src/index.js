@@ -679,12 +679,12 @@ app.post('/download_pdf',isAuthenticated, async (req, res) => {
     </body>
   </html>
 `;
-
+ 
   try {
     const browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
+    }); 
     const page = await browser.newPage();
     await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
 
