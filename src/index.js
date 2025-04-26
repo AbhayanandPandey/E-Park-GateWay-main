@@ -567,28 +567,43 @@ app.post("/product", isAuthenticated, async (req, res) => {
   }
 })
 
-app.get("/order_details", isAuthenticated, isAuth, async (req, res) => {
+const jwt = require("jsonwebtoken");
+
+app.post("/product", async (req, res) => {
   try {
-    const userEmail = req.user.email;
-    console.log("Authenticated user email:", userEmail);
-
-    const user = await register.findOne({ email: userEmail }).lean();
-    console.log("Fetched user:", user);
-
-    if (!user || !user.products || user.products.length === 0) {
-      console.log("No products found");
-      return res.render("orderdetails", { products: [] });
+    const token = req.cookies.token;
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized: No token found" });
     }
 
-    const recentProducts = user.products;
-    console.log("Recent products:", recentProducts);
+    const decoded = jwt.verify(token, "kjrvgkrewgfuwgfvjkjewqwgfueqgf");
+    const user = await register.findById(decoded._id);
 
-    res.render("orderdetails", { products: recentProducts });
-  } catch (err) {
-    console.error("Error fetching tickets:", err);
-    res.status(500).send("Server Error");
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    const productDate = moment().tz("Asia/Kolkata").format("DD MMM YYYY, h:mm A");
+    const randomProductId = productData.product_ID; // Make sure this is generated or assigned properly
+
+    const newProduct = {
+      productID: randomProductId,
+      productName: "Ticket for park",
+      productPrice: "30.00",
+      productImage: null,
+      productDate: productDate,
+    };
+
+    user.products.push(newProduct);
+    await user.save();
+
+    res.status(200).json({ message: "Ticket booked successfully!", productId: randomProductId });
+  } catch (error) {
+    console.error("Error creating product:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
+
 
 app.post('/download_pdf',isAuthenticated, async (req, res) => {
   const { productID, productDate, productPrice } = req.body;
