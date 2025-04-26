@@ -10,7 +10,7 @@ const generateRandomProductId = () => {
   return 'E-PARK-' + Math.random().toString(36).substr(2, 9).toUpperCase();
 };
 
-
+const pdf = require("html-pdf");
 app.use(session({
   secret: "kjrvgkrewgfuwgfvjkjewqwgfueqgf",
   resave: false,
@@ -595,9 +595,10 @@ app.get("/order_details", isAuthenticated, isAuth, async (req, res) => {
   }
 });
 
-app.post('/download_pdf',isAuthenticated, async (req, res) => {
+app.post('/download_pdf', isAuthenticated, async (req, res) => {
   const { productID, productDate, productPrice } = req.body;
 
+  // Build the same HTML you had
   const htmlContent = `
   <html>
     <head>
@@ -678,30 +679,28 @@ app.post('/download_pdf',isAuthenticated, async (req, res) => {
       </div>
     </body>
   </html>
-`;
- 
-  try {
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    }); 
-    const page = await browser.newPage();
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+  `;
 
-    const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
-    await browser.close();
+  const options = {
+    format: 'A4',
+    border: '10mm',
+    type: 'pdf',
+    // `html-pdf` picks up background styles by default.
+  };
+
+  pdf.create(htmlContent, options).toBuffer((err, buffer) => {
+    if (err) {
+      console.error('PDF generation error:', err);
+      return res.status(500).send('Failed to generate PDF');
+    }
 
     res.writeHead(200, {
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="receipt-${productID}.pdf"`,
-      'Content-Length': pdfBuffer.length
+      'Content-Length': buffer.length
     });
-
-    res.end(pdfBuffer);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Failed to generate PDF');
-  }
+    res.end(buffer);
+  });
 });
 
 const User = require('./models/registers');
