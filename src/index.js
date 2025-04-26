@@ -11,7 +11,12 @@ const generateRandomProductId = () => {
 };
 
 
-
+app.use(session({
+  secret: "kjrvgkrewgfuwgfvjkjewqwgfueqgf",
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false }, // true only for HTTPS
+}));
 
 const isAuth = require("./middleware/isAuthentic");
 const PDFDocument = require('pdfkit');
