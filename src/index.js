@@ -543,11 +543,8 @@ app.post("/product", async (req, res) => {
       return res.status(401).json({ message: "Unauthorized: No token found" });
     }
 
-    // 2. Verify token and get user ID
     const decoded = jwt.verify(token, 'kjrvgkrewgfuwgfvjkjewqwgfueqgf');
     const user = await register.findById(decoded._id);
-
-    // 3. If no user found
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
