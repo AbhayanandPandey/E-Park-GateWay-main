@@ -220,90 +220,100 @@ app.get("/otp", (req, res) => {
 app.post("/register", async (req, res) => {
   try {
     const { User_name, email, password } = req.body;
+
     if (!User_name || !email || !password) {
       req.session.alertMessage = "Please fill all the fields.";
       req.session.alertType = "danger";
       return res.status(400).redirect("/loginsignup");
     }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       req.session.alertMessage = "Please enter a valid email address.";
       req.session.alertType = "danger";
       return res.status(400).redirect("/loginsignup");
     }
+
     const existingUser = await register.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       req.session.alertMessage = "Email already exists.";
       req.session.alertType = "danger";
       return res.status(400).redirect("/loginsignup");
     }
+
     const newUser = new register({
       User_name,
       email: email.toLowerCase(),
-      password: password,
+      password,
     });
+
     const token = await newUser.generateAuthToken();
     await newUser.save();
-    await sendCNFEmail1(email);
-    req.session.alertMessage =
-      "Registration successful. Please check your email for confirmation.";
+    await sendCNFEmail1(email); // Assuming this is working
+
+    req.session.alertMessage = "Registration successful. Please check your email.";
     req.session.alertType = "success";
-    res.status(201).redirect("/loginsignup");
+    return res.status(201).redirect("/loginsignup");
   } catch (err) {
     console.error("Registration error: ", err);
-    req.session.alertMessage =
-      "An error occurred during registration. Please try again.";
+    req.session.alertMessage = "An error occurred during registration.";
     req.session.alertType = "danger";
-    res.status(400).redirect("/loginsignup");
+    return res.status(500).redirect("/loginsignup");
   }
 });
 
+
 app.post("/login", async (req, res) => {
   try {
-    const log_n = req.body.log_name.toLowerCase();
-    const log_p = req.body.log_password;
-    email.email = log_n;
-    const user = await register.findOne({ email: log_n });
-    if (!user) {
-      req.session.alertMessage = "User not exist";
-      req.session.alertType = "danger";
-      return res.status(400).redirect("/loginsignup");
-    }
-    const isMatch = await bcrypt.compare(log_p, user.password);
+    const email = req.body.log_name?.toLowerCase();
+    const password = req.body.log_password;
 
-    if (!isMatch) {
-      req.session.alertMessage = "Invalid email or password";
+    const user = await register.findOne({ email });
+
+    if (!user) {
+      req.session.alertMessage = "User does not exist.";
       req.session.alertType = "danger";
       return res.status(400).redirect("/loginsignup");
     }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      req.session.alertMessage = "Invalid email or password.";
+      req.session.alertType = "danger";
+      return res.status(400).redirect("/loginsignup");
+    }
+
+    // ✅ Save session and cookie
     req.session.userId = user._id;
     const token = await user.generateAuthToken();
+
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 30 * 24 * 60 * 60 * 1000,
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     });
-    G_A.ga = 999;
 
+    // ✅ Log time and save
     const indiaTime = moment().tz("Asia/Kolkata").format();
     user.lastLogin = indiaTime;
-    const z1 = user.email;
-    const z2 = user.User_name;
     await user.save();
+
     req.session.alertMessage = "Login successful!";
     req.session.alertType = "success";
+
+    // ✅ Ensure redirect works properly
     const redirectRoute = req.session.redirectTo || "/index";
-
-
     req.session.redirectTo = null;
-    res.status(200).redirect(redirectRoute);
+
+    return res.status(200).redirect(redirectRoute);
   } catch (error) {
     console.error("Login error: ", error);
     req.session.alertMessage = "An error occurred. Please try again.";
     req.session.alertType = "danger";
-    res.status(400).redirect("/loginsignup");
+    return res.status(500).redirect("/loginsignup");
   }
 });
+
 app.post("/Resend-OTP", async (req, res) => {
   const now = Date.now();
   const lastSent = req.session.lastSent || 0;
