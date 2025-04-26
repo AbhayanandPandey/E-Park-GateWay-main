@@ -567,7 +567,6 @@ app.post("/product", isAuthenticated, async (req, res) => {
   }
 })
 
-const jwt = require("jsonwebtoken");
 
 app.post("/product", async (req, res) => {
   try {
