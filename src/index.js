@@ -535,74 +535,68 @@ app.post("/conf-OTP", async (req, res) => {
   }
 });
 
-app.post("/product", isAuthenticated, async (req, res) => {
-  const user = await register.findOne({ email: email.email });
-  if (!user) {
-    return res.status(404).json({ message: "User not found." });
-  }
-  try {
-    const randomProductId = productData.product_ID
-    const productdadada =
-    {
-      productDate: moment().tz("Asia/Kolkata").format("DD MMM YYYY, h:mm A"),
-    }
-    const date = new Date(productdadada.productDate);
-    const dateOnly = date.toLocaleDateString();
-    const timeOnly = date.toLocaleTimeString();
-    const fulltime = `${dateOnly}, ${timeOnly}`;
-    console.log("Date: ", dateOnly);
-    const newProduct = {
-      productID: randomProductId,
-      productName: "Ticket for park",
-      productPrice: "30.00",
-      productImage: null,
-      productDate: date , 
-    };
-    user.products.push(newProduct);
-    await user.save();
-    res.status(200).json({ message: "Ticket Booked successfully!", productId: randomProductId });
-  } catch (error) {
-    console.error("Error creating product:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-})
-
-
 app.post("/product", async (req, res) => {
   try {
+    // 1. Check token in cookies
     const token = req.cookies.token;
     if (!token) {
       return res.status(401).json({ message: "Unauthorized: No token found" });
     }
 
-    const decoded = jwt.verify(token, "kjrvgkrewgfuwgfvjkjewqwgfueqgf");
+    // 2. Verify token and get user ID
+    const decoded = jwt.verify(token, 'kjrvgkrewgfuwgfvjkjewqwgfueqgf');
     const user = await register.findById(decoded._id);
 
+    // 3. If no user found
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
 
+    // 4. Create product data
     const productDate = moment().tz("Asia/Kolkata").format("DD MMM YYYY, h:mm A");
-    const randomProductId = productData.product_ID; // Make sure this is generated or assigned properly
 
     const newProduct = {
-      productID: randomProductId,
+      productID: productData.product_ID, // Ensure this exists or generate it
       productName: "Ticket for park",
       productPrice: "30.00",
       productImage: null,
       productDate: productDate,
     };
 
+    // 5. Save to user's products
     user.products.push(newProduct);
     await user.save();
 
-    res.status(200).json({ message: "Ticket booked successfully!", productId: randomProductId });
+    // 6. Send response
+    res.status(200).json({ message: "Ticket Booked successfully!", productId: newProduct.productID });
   } catch (error) {
     console.error("Error creating product:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
 
+app.get("/order_details", isAuthenticated, isAuth, async (req, res) => {
+  try {
+    const userEmail = req.user.email;
+    console.log("Authenticated user email:", userEmail);
+
+    const user = await register.findOne({ email: userEmail }).lean();
+    console.log("Fetched user:", user);
+
+    if (!user || !user.products || user.products.length === 0) {
+      console.log("No products found");
+      return res.render("orderdetails", { products: [] });
+    }
+
+    const recentProducts = user.products;
+    console.log("Recent products:", recentProducts);
+
+    res.render("orderdetails", { products: recentProducts });
+  } catch (err) {
+    console.error("Error fetching tickets:", err);
+    res.status(500).send("Server Error");
+  }
+});
 
 app.post('/download_pdf',isAuthenticated, async (req, res) => {
   const { productID, productDate, productPrice } = req.body;
