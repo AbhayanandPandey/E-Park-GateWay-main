@@ -27,7 +27,7 @@ Welcome to the E-Park Gateway project, a platform for smart parking management. 
 
 You can deploy this React project easily using:
 
-- [GitHub Pages]([https://pages.github.com/](https://github.com/AbhayanandPandey/Shoping_zone))
+- [GitHub Pages](https://github.com/AbhayanandPandey/Shoping_zone)
 
 ---
 
